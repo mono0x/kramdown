@@ -64,6 +64,7 @@ module Kramdown
         @toc_code = nil
         @indent = 2
         @stack = []
+        @section_level = 0
       end
 
       # The mapping of element type to conversion method.
@@ -143,7 +144,11 @@ module Kramdown
           attr['id'] = generate_id(el.options[:raw_text])
         end
         @toc << [el.options[:level], attr['id'], el.children] if attr['id'] && in_toc?(el)
-        "#{' '*indent}<h#{el.options[:level]}#{html_attributes(attr)}>#{inner(el, indent)}</h#{el.options[:level]}>\n"
+        result = ''
+        result << "#{' '*indent}</section>\n" * [ @section_level - el.options[:level] + 1, 0 ].max
+        @section_level = el.options[:level]
+        result << "#{' '*indent}<section>\n#{' '*indent}<h1#{html_attributes(attr)}>#{inner(el, indent)}</h1>\n"
+        result
       end
 
       def convert_hr(el, indent)
@@ -335,6 +340,7 @@ module Kramdown
                  end
           result.sub!(/#{@toc_code.last}/, text)
         end
+        result << "</section>\n" * @section_level
         result
       end
 
